@@ -3,6 +3,7 @@ TILESticker
 
 ### 概要
 ブラウザで使えるシンプルなClaymorphismデザインのタスク管理アプリです。PC/モバイル対応。ToDo、メモ、リンク、リスト、日付の5種類のカードを管理し、検索・フィルター・ソート機能を備えます。
+<img width="1906" height="977" alt="Screenshot 2025-08-17 at 23 58 53" src="https://github.com/user-attachments/assets/4ea72949-a6b7-43bf-83e1-95cdca9d54b2" />
 
 ### 制作背景
 日々の メモや予定、お気に入りのサイトなど、保存したい情報は多岐にわたります。
@@ -19,6 +20,12 @@ TILESticker
 - スムーズなカードの移動アニメーション
 - 永続化（IndexedDB、PWA対応）
 - URLスキーム（外部からのカード作成）
+- 
+### デモ・動画
+[TILESticker デモ](https://tile-sticker.vercel.app)
+[PC版](https://youtu.be/EsW8mm1dV7c)
+[モバイル版](https://youtube.com/shorts/lU73chz4nxE?feature=share)
+[URLスキーム](https://youtu.be/q5rVhi35uqs)
 
 ### 動作環境
 - Node.js 18 以上（推奨 20）
@@ -40,6 +47,11 @@ pnpm test
 pnpm build
 ```
 
+### 操作方法
+- +ボタン カードを追加
+- 検索ボタン タグや文章を単語検索
+- メニューボタン カードのフィルターや並び替え
+
 ### ショートカット
 - ⌘(Ctrl)F: 検索
 - ⌘(Ctrl)+クリック: カード削除
@@ -48,8 +60,11 @@ pnpm build
 
 ### URLスキーム
 URLパラメータを使って外部からカードを作成できます。ブックマークやショートカットアプリとの連携に便利です。
-
-
+例:
+- /?make_todo_name=洗車&make_todo_name=本棚整理&make_todo_name=ゴミ出し&tags=家事
+- /?make_link_name=GitHub&link=https://github.com&tags=開発
+- /?make_list_name=旅行持ち物&list=パスポート,財布,カメラ,充電器&tags=旅行
+これを利用したiOS用カード追加ショートカットがあります。[リンクはこちら](https://www.icloud.com/shortcuts/6bd8d5ec6e464ccc93b8c6abd0b9e07c)
 
 #### パラメータ一覧
 | パラメータ | 説明 | 例 |
