@@ -1,0 +1,28 @@
+<svg width="192" height="192" viewBox="0 0 192 192" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="192" height="192" rx="24" fill="#ffc4f1"/>
+  <rect x="16" y="16" width="160" height="160" rx="16" fill="#fff" stroke="#000" stroke-width="2" stroke-opacity="0.1"/>
+  
+  <!-- タイルのパターン -->
+  <rect x="32" y="32" width="32" height="32" rx="4" fill="#ffc4f1" opacity="0.8"/>
+  <rect x="72" y="32" width="32" height="32" rx="4" fill="#fffbb5" opacity="0.8"/>
+  <rect x="112" y="32" width="32" height="32" rx="4" fill="#a6e2ff" opacity="0.8"/>
+  <rect x="152" y="32" width="32" height="32" rx="4" fill="#dbc9ff" opacity="0.8"/>
+  
+  <rect x="32" y="72" width="32" height="32" rx="4" fill="#a6ffe4" opacity="0.8"/>
+  <rect x="72" y="72" width="32" height="32" rx="4" fill="#ffc4f1" opacity="0.8"/>
+  <rect x="112" y="72" width="32" height="32" rx="4" fill="#fffbb5" opacity="0.8"/>
+  <rect x="152" y="72" width="32" height="32" rx="4" fill="#a6e2ff" opacity="0.8"/>
+  
+  <rect x="32" y="112" width="32" height="32" rx="4" fill="#dbc9ff" opacity="0.8"/>
+  <rect x="72" y="112" width="32" height="32" rx="4" fill="#a6ffe4" opacity="0.8"/>
+  <rect x="112" y="112" width="32" height="32" rx="4" fill="#ffc4f1" opacity="0.8"/>
+  <rect x="152" y="112" width="32" height="32" rx="4" fill="#fffbb5" opacity="0.8"/>
+  
+  <rect x="32" y="152" width="32" height="32" rx="4" fill="#a6e2ff" opacity="0.8"/>
+  <rect x="72" y="152" width="32" height="32" rx="4" fill="#dbc9ff" opacity="0.8"/>
+  <rect x="112" y="152" width="32" height="32" rx="4" fill="#a6ffe4" opacity="0.8"/>
+  <rect x="152" y="152" width="32" height="32" rx="4" fill="#ffc4f1" opacity="0.8"/>
+  
+  <!-- 中央のT文字 -->
+  <text x="96" y="108" font-family="Arial, sans-serif" font-size="48" font-weight="bold" text-anchor="middle" fill="#333">T</text>
+</svg>

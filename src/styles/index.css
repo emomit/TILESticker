@@ -1,0 +1,70 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --clay-base: #ffffff;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  @apply bg-[color:var(--clay-base)] text-clay-text antialiased;
+}
+
+/* Clay utility */
+.clay {
+  background: var(--clay-base);
+  border-radius: 1.25rem;
+  box-shadow:
+    12px 12px 24px rgba(0,0,0,0.12),
+    -6px -6px 14px rgba(255,255,255,0.9) inset,
+    6px 6px 12px rgba(0,0,0,0.08) inset;
+}
+
+.focus-ring {
+  outline: 2px solid rgba(59,130,246,0.8);
+  outline-offset: 2px;
+}
+
+.divider {
+  height: 1px;
+  background: rgba(0,0,0,0.08);
+}
+
+.transparent-input {
+  background: transparent;
+  outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.isolate {
+  isolation: isolate;
+}
+
+/* テキスト選択を無効化（入力欄以外） */
+.no-select {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 入力欄は選択可能にする */
+input, textarea {
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
