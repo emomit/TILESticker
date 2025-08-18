@@ -7,6 +7,7 @@ import { matchesQuery } from './util/search'
 
 import { CloudFirstService } from './services/cloudFirstService'
 import { validateItem, sanitizeItem } from './util/validation'
+import { supabase } from './lib/supabase'
 
 type SortKey = 'createdAt' | 'updatedAt' | 'type'
 
@@ -320,16 +321,72 @@ export const useStore = create<State & Actions>()(
     },
 
     syncToCloud: async (userId: string) => {
-      // Cloud-first mode only
+      // Cloud-first mode only - no action needed
     },
 
     syncFromCloud: async (userId: string) => {
-      // Cloud-first mode only
+      const { cloudFirst } = get()
+      if (!cloudFirst) return
+      
+      try {
+        const { data: cloudItems, error } = await supabase
+          .from('items')
+          .select('*')
+          .eq('user_id', userId)
+          .is('deleted_at', null)
+          .order('updated_at', { ascending: false })
+
+        if (error || !cloudItems) return
+
+        for (const cloudItem of cloudItems) {
+          const localItem: Item = {
+            id: cloudItem.id,
+            type: cloudItem.type,
+            title: cloudItem.title,
+            content: cloudItem.content,
+            done: cloudItem.done,
+            href: cloudItem.href,
+            list: cloudItem.list,
+            date: cloudItem.date,
+            tags: cloudItem.tags || [],
+            color: cloudItem.color,
+            createdAt: new Date(cloudItem.created_at).getTime(),
+            updatedAt: new Date(cloudItem.updated_at).getTime(),
+          }
+
+          await db.items.put(localItem)
+        }
+
+        await get().load()
+        set({ cloudHydrated: true })
+      } catch (error) {
+        // Handle error silently
+      }
     },
 
     setupRealtimeSync: (userId: string) => {
-      // Cloud-first mode only
-      return () => {}
+      const { cloudFirst } = get()
+      if (!cloudFirst) return () => {}
+      
+      const subscription = supabase
+        .channel('items_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'items',
+            filter: `user_id=eq.${userId}`,
+          },
+          async () => {
+            await get().syncFromCloud(userId)
+          }
+        )
+        .subscribe()
+
+      return () => {
+        subscription.unsubscribe()
+      }
     },
 
     softDelete: async (id: string, userId?: string) => {
