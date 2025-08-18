@@ -212,11 +212,22 @@ export class CloudFirstService {
         .eq('id', id)
         .eq('user_id', userId)
 
-      if (error) return false
+      if (error) {
+        console.error('Cloud delete error:', error)
+        return false
+      }
 
-      await db.items.delete(id)
+      // ローカルIndexedDBからも削除
+      try {
+        await db.items.delete(id)
+      } catch (localError) {
+        console.error('Local delete error:', localError)
+      }
+
+      console.log('Deleted item via cloud:', id)
       return true
     } catch (error) {
+      console.error('Delete item failed:', error)
       return false
     }
   }

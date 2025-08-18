@@ -10,6 +10,7 @@ export default defineConfig({
     },
   },
   build: {
+    target: 'es2015',
     rollupOptions: {
       input: {
         main: fileURLToPath(new URL('./index.html', import.meta.url)),

@@ -347,6 +347,10 @@ export const useStore = create<State & Actions>()(
         
         console.log('Cloud items found:', cloudItems?.length || 0)
 
+        // 現在のローカルアイテムを取得
+        const currentLocalItems = await db.items.toArray()
+        const localItemIds = new Set(currentLocalItems.map(item => item.id))
+
         for (const cloudItem of cloudItems) {
           const localItem: Item = {
             id: cloudItem.id,
@@ -364,6 +368,18 @@ export const useStore = create<State & Actions>()(
           }
 
           await db.items.put(localItem)
+        }
+
+        // クラウドに存在しないローカルアイテムを削除（削除されたアイテム）
+        const cloudItemIds = new Set(cloudItems.map(item => item.id))
+        for (const localItem of currentLocalItems) {
+          if (!cloudItemIds.has(localItem.id)) {
+            try {
+              await db.items.delete(localItem.id)
+            } catch (error) {
+              console.error('Failed to delete local item:', localItem.id, error)
+            }
+          }
         }
 
         await get().load()
@@ -411,7 +427,15 @@ export const useStore = create<State & Actions>()(
           const items = get().items.filter((i: Item) => i.id !== id)
           set({ items })
           get().applyFilter()
+          // ローカルIndexedDBからも削除
+          try {
+            await db.items.delete(id)
+          } catch (error) {
+            console.error('Local delete error:', error)
+          }
           return
+        } else {
+          console.warn('Cloud delete failed, falling back to local')
         }
       }
       
@@ -422,7 +446,7 @@ export const useStore = create<State & Actions>()(
         get().applyFilter()
         await db.items.delete(id)
       } catch (error) {
-        // Handle error silently
+        console.error('Soft delete error:', error)
       }
     },
 
