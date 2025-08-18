@@ -7,9 +7,9 @@ import { matchesQuery } from './util/search'
 
 import { CloudFirstService } from './services/cloudFirstService'
 import { validateItem, sanitizeItem } from './util/validation'
-import { supabase } from './lib/supabase'
+import { supabase, supabaseEnabled } from './lib/supabase'
 
-type SortKey = 'createdAt' | 'updatedAt' | 'type'
+type SortKey = 'createdAt' | 'type'
 
 type State = {
   items: Item[]
@@ -294,8 +294,6 @@ export const useStore = create<State & Actions>()(
         
         if (sort === 'createdAt') {
           filtered = filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
-        } else if (sort === 'updatedAt') {
-          filtered = filtered.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
         } else if (sort === 'type') {
           filtered = filtered.sort((a, b) => {
             try {
@@ -322,7 +320,7 @@ export const useStore = create<State & Actions>()(
 
     syncFromCloud: async (userId: string) => {
       const { cloudFirst } = get()
-      if (!cloudFirst) {
+      if (!cloudFirst || !supabaseEnabled) {
         return
       }
       try {
@@ -362,7 +360,7 @@ export const useStore = create<State & Actions>()(
         }
 
         // クラウドに存在しないローカルアイテムを削除（削除されたアイテム）
-        const cloudItemIds = new Set(cloudItems.map(item => item.id))
+        const cloudItemIds = new Set(cloudItems.map((item: any) => item.id))
         for (const localItem of currentLocalItems) {
           if (!cloudItemIds.has(localItem.id)) {
             try {
@@ -382,7 +380,7 @@ export const useStore = create<State & Actions>()(
 
     setupRealtimeSync: (userId: string) => {
       const { cloudFirst } = get()
-      if (!cloudFirst) return () => {}
+      if (!cloudFirst || !supabaseEnabled) return () => {}
       
       const subscription = supabase
         .channel('items_changes')
@@ -445,14 +443,15 @@ export const useStore = create<State & Actions>()(
     setCurrentUserId: (userId?: string) => set({ currentUserId: userId }),
 
     initializeCloudFirst: async (userId: string) => {
+      if (!supabaseEnabled) {
+        set({ cloudFirst: false, currentUserId: userId })
+        return
+      }
       const cloudService = CloudFirstService.getInstance()
-      
       const isEmpty = await cloudService.isCloudEmpty(userId)
-      
       if (isEmpty) {
         await cloudService.uploadLocalData(userId)
       }
-      
       set({ cloudFirst: true, currentUserId: userId })
     },
   }))

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { User, Session } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { supabase, supabaseEnabled } from '@/lib/supabase'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)
@@ -8,8 +8,14 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    if (!supabaseEnabled) {
+      setLoading(false)
+      return
+    }
+
     // 現在のセッションを取得
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data }: { data: { session: Session | null } }) => {
+      const { session } = data
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -18,7 +24,7 @@ export function useAuth() {
     // 認証状態の変更を監視
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((_event: unknown, session: Session | null) => {
       setSession(session)
       setUser(session?.user ?? null)
       setLoading(false)
@@ -28,39 +34,35 @@ export function useAuth() {
   }, [])
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    if (!supabaseEnabled) return { error: null }
+    const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error }
   }
 
   const signUp = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-    })
+    if (!supabaseEnabled) return { error: null }
+    const { error } = await supabase.auth.signUp({ email, password })
     return { error }
   }
 
   const signOut = async () => {
+    if (!supabaseEnabled) return { error: null }
     const { error } = await supabase.auth.signOut()
     return { error }
   }
 
   const signOutLocal = async () => {
-    // 公式のローカルサインアウト（ネットワーク不要）
-    const { error } = await supabase.auth.signOut({ scope: 'local' })
-    // ローカル状態も即時クリア
+    if (supabaseEnabled) {
+      await supabase.auth.signOut({ scope: 'local' })
+    }
     setUser(null)
     setSession(null)
-    return { error }
+    return { error: null }
   }
 
   const signInWithGoogle = async () => {
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-    })
+    if (!supabaseEnabled) return { error: null }
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google' })
     return { error }
   }
 

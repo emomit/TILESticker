@@ -29,7 +29,7 @@ export function AppHeader() {
   const handleFilter = (type: ItemType | null) => {
     const nextType = filterType === type ? null : type
     setFilterType(nextType)
-    setSort(nextType === null ? 'updatedAt' : 'type')
+    setSort(nextType === null ? 'createdAt' : 'type')
     setSortMenuOpen(false)
   }
 
@@ -174,7 +174,7 @@ export function AppHeader() {
                     style={{ background: 'transparent' }}
                     aria-label="ソート"
                     onClick={handleSortChange}
-                    title={`ソート: ${sort === 'updatedAt' ? '更新日時' : '種類'}`}
+                    title={`ソート: ${sort === 'createdAt' ? '作成順' : '種類'}`}
                   >
                     <Icon name="sort" size={18} filled={sort === 'type'} />
                   </button>
@@ -315,7 +315,7 @@ export function AppHeader() {
                     style={{ background: 'transparent' }}
                     aria-label="ソート"
                     onClick={handleSortChange}
-                    title={`ソート: ${sort === 'updatedAt' ? '更新日時' : '種類'}`}
+                    title={`ソート: ${sort === 'createdAt' ? '作成順' : '種類'}`}
                   >
                     <Icon name="sort" size={20} filled={sort === 'type'} />
                   </button>

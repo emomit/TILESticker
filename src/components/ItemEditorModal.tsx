@@ -89,7 +89,7 @@ export function ItemEditorModal({ item }: Props) {
       <AnimatePresence onExitComplete={() => setVisible(false)}>
         {item && id && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center"
+          className="fixed inset-0 z-[80] flex items-center justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -112,8 +112,8 @@ export function ItemEditorModal({ item }: Props) {
             initial={{ y: 40, scale: 0.96, opacity: 0 }}
             animate={{ y: 0, scale: 1, opacity: 1, transition: { type: 'spring', stiffness: 140, damping: 15, mass: 0.6 } }}
             exit={{ y: 40, scale: 0.98, opacity: 1 }}
-            className="relative z-60 clay rounded-2xl w-[min(760px,92vw)] max-h-[80vh] overflow-hidden backdrop-blur-sm"
-            style={{ ['--clay-base' as any]: baseColor, borderRadius: 20, zIndex: 60 }}
+            className="relative z-[90] clay rounded-2xl w-[min(760px,92vw)] max-h-[80vh] overflow-hidden backdrop-blur-sm"
+            style={{ ['--clay-base' as any]: baseColor, borderRadius: 20, zIndex: 90 }}
           >
             <div className="p-5">
               <input

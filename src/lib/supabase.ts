@@ -3,12 +3,13 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 
+export const supabaseEnabled = Boolean(supabaseUrl && supabaseAnonKey)
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables')
-}
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// 環境変数が未設定の場合でもアプリを動作させるため、
+// クラウド機能は無効化し、クライアントの生成は行わない
+export const supabase = supabaseEnabled
+  ? createClient(supabaseUrl as string, supabaseAnonKey as string)
+  : (undefined as unknown as any)
 
 export type Database = {
   public: {

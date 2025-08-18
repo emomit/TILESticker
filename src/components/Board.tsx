@@ -54,9 +54,7 @@ export function Board() {
         }
       })
       
-      if (sort === 'updatedAt') {
-        result = result.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
-      } else if (sort === 'type') {
+      if (sort === 'type') {
         const typeOrder = { todo: 0, memo: 1, link: 2, list: 3, date: 4 }
         result = result.sort((a, b) => {
           try {
