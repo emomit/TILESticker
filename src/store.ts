@@ -70,8 +70,9 @@ export const useStore = create<State & Actions>()(
     
 
     load: async () => {
-      const items = await db.items.orderBy('createdAt').reverse().toArray()
-      set({ items, filtered: items.map((i) => i.id), loading: false })
+      const items = await db.items.toArray()
+      set({ items, loading: false })
+      get().applyFilter()
     },
 
     add: async (type: ItemType) => {
@@ -84,7 +85,8 @@ export const useStore = create<State & Actions>()(
         
         if (newItem) {
           const items = [newItem, ...get().items]
-          set({ items, filtered: items.map((i) => i.id) })
+          set({ items })
+          get().applyFilter()
           return newItem
         } else {
                   // Fallback to local
@@ -116,7 +118,8 @@ export const useStore = create<State & Actions>()(
       if (type === 'link') base.href = ''
       await db.items.put(base)
       const items = [base, ...get().items]
-      set({ items, filtered: items.map((i) => i.id) })
+      set({ items })
+      get().applyFilter()
       return base
     },
 
@@ -264,7 +267,9 @@ export const useStore = create<State & Actions>()(
       await db.transaction('rw', db.items, async () => {
         for (const it of data.items) await db.items.put(it)
       })
-      await get().load()
+      const items = await db.items.toArray()
+      set({ items })
+      get().applyFilter()
     },
 
     applyFilter: () => {
@@ -371,8 +376,9 @@ export const useStore = create<State & Actions>()(
           }
         }
 
-        await get().load()
-        set({ cloudHydrated: true })
+        const items = await db.items.toArray()
+        set({ items, cloudHydrated: true })
+        get().applyFilter()
       } catch (error) {
         console.error('SyncFromCloud error:', error)
       }
