@@ -86,8 +86,8 @@ export function ItemEditorModal({ item }: Props) {
           }
         `}</style>
       )}
-      <AnimatePresence onExitComplete={() => setSelected(undefined)}>
-        {item && visible && (
+      <AnimatePresence onExitComplete={() => setVisible(false)}>
+        {item && id && (
         <motion.div
           className="fixed inset-0 z-50 flex items-center justify-center"
           initial={{ opacity: 0 }}
@@ -100,7 +100,7 @@ export function ItemEditorModal({ item }: Props) {
                 if (Object.keys(tempData).length > 0) {
                   update(item.id, tempData)
                 }
-                setVisible(false)
+                setSelected(undefined)
               }}
               aria-hidden="true"
             />
