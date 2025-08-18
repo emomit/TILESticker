@@ -5,6 +5,7 @@ import { useStore } from '@/store'
 import { MiniCalendar } from './MiniCalendar'
 import { useState, useEffect } from 'react'
 import { COLORS } from '@/constants/ui'
+import { useAuth } from '@/hooks/useAuth'
 
 type Props = { item: Item; onClick: () => void; isCommandPressed?: boolean }
 
@@ -24,6 +25,7 @@ export function ItemCard({ item, onClick, isCommandPressed = false }: Props) {
   const isSelected = selectedId === item.id
   const remove = useStore((s) => s.remove)
   const [isLocalCommandPressed, setIsLocalCommandPressed] = useState(false)
+  const { user } = useAuth()
 
   const handleLinkClick = (e: React.MouseEvent) => {
     if (item.type === 'link' && item.href) {
@@ -65,7 +67,7 @@ export function ItemCard({ item, onClick, isCommandPressed = false }: Props) {
     if (isLocalCommandPressed) {
       e.preventDefault()
       e.stopPropagation()
-      remove(item.id)
+      remove(item.id, user?.id)
       return
     }
     onClick()

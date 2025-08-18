@@ -5,8 +5,8 @@ export class ClayDB extends Dexie {
   items!: Table<Item, string>
   constructor() {
     super('tilesticker')
-    this.version(1).stores({
-      items: 'id, title, updatedAt, *tags, content',
+    this.version(2).stores({
+      items: 'id, title, updatedAt, createdAt, *tags, content',
     })
   }
 }

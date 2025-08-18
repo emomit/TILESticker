@@ -29,7 +29,12 @@ export const TABLER_ICONS = {
   list: 'tabler:list',
   date: 'tabler:calendar',
   delete: 'tabler:trash',
-  edit: 'tabler:edit'
+  edit: 'tabler:edit',
+  user: 'tabler:user',
+  login: 'tabler:login',
+  logout: 'tabler:logout',
+  download: 'tabler:download',
+  upload: 'tabler:upload'
 } as const
 
 export const TABLER_ICONS_FILLED = {
@@ -47,7 +52,12 @@ export const TABLER_ICONS_FILLED = {
   list: 'tabler:list-filled',
   date: 'tabler:calendar-filled',
   delete: 'tabler:trash-filled',
-  edit: 'tabler:edit'
+  edit: 'tabler:edit',
+  user: 'tabler:user-filled',
+  login: 'tabler:login',
+  logout: 'tabler:logout',
+  download: 'tabler:download',
+  upload: 'tabler:upload'
 } as const
 
 export const KEY = {

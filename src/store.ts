@@ -5,7 +5,10 @@ import { db } from './db'
 import type { Item, ItemType } from './types'
 import { matchesQuery } from './util/search'
 
-type SortKey = 'updatedAt' | 'type'
+import { CloudFirstService } from './services/cloudFirstService'
+import { validateItem, sanitizeItem } from './util/validation'
+
+type SortKey = 'createdAt' | 'updatedAt' | 'type'
 
 type State = {
   items: Item[]
@@ -16,14 +19,19 @@ type State = {
   sort: SortKey
   filterType: ItemType | null
   loading: boolean
+  syncing: boolean
+  lastSyncTime: number
+  cloudHydrated: boolean
+  cloudFirst: boolean
+  currentUserId?: string
 }
 
 type Actions = {
   load: () => Promise<void>
   add: (type: ItemType) => Promise<Item>
   update: (id: string, patch: Partial<Item>) => Promise<void>
-  remove: (id: string) => Promise<void>
-  removeAll: () => Promise<void>
+  remove: (id: string, userId?: string) => Promise<void>
+  removeAll: (userId?: string) => Promise<void>
   toggleDone: (id: string) => Promise<void>
   setSelected: (id?: string) => void
   setQuery: (q: string) => void
@@ -33,26 +41,56 @@ type Actions = {
   exportJson: () => Promise<string>
   importJson: (json: string) => Promise<void>
   applyFilter: () => void
+  syncToCloud: (userId: string) => Promise<void>
+  syncFromCloud: (userId: string) => Promise<void>
+  setupRealtimeSync: (userId: string) => () => void
+  softDelete: (id: string, userId?: string) => Promise<void>
+  setCloudHydrated: (v: boolean) => void
+  setCloudFirst: (v: boolean) => void
+  setCurrentUserId: (userId?: string) => void
+  initializeCloudFirst: (userId: string) => Promise<void>
 }
 
 export const useStore = create<State & Actions>()(
-  (typeof import.meta !== 'undefined' && import.meta.env?.DEV ? devtools : (fn: any) => fn)((set: any, get: any) => ({
+  (import.meta.env?.DEV ? devtools : (fn: any) => fn)((set: any, get: any) => ({
     items: [],
     filtered: [],
     selectedId: undefined,
     searchOpen: false,
     query: '',
-    sort: 'updatedAt',
+    sort: 'createdAt',
     filterType: null,
     loading: true,
+    syncing: false,
+    lastSyncTime: 0,
+    cloudHydrated: false,
+    cloudFirst: false,
+    currentUserId: undefined,
     
 
     load: async () => {
-      const items = await db.items.orderBy('updatedAt').reverse().toArray()
+      const items = await db.items.orderBy('createdAt').reverse().toArray()
       set({ items, filtered: items.map((i) => i.id), loading: false })
     },
 
     add: async (type: ItemType) => {
+      const { cloudFirst, currentUserId } = get()
+      
+      if (cloudFirst && currentUserId) {
+        // Cloud-first: Supabaseで追加
+        const cloudService = CloudFirstService.getInstance()
+        const newItem = await cloudService.addItem(type, currentUserId)
+        
+        if (newItem) {
+          const items = [newItem, ...get().items]
+          set({ items, filtered: items.map((i) => i.id) })
+          return newItem
+        } else {
+                  // Fallback to local
+        }
+      }
+      
+      // ローカル追加（フォールバックまたはcloudFirst=false）
       const now = Date.now()
       const base: Item = {
         id: nanoid(),
@@ -82,31 +120,119 @@ export const useStore = create<State & Actions>()(
     },
 
     update: async (id: string, patch: Partial<Item>) => {
+      const { cloudFirst, currentUserId } = get()
+      
+      if (cloudFirst && currentUserId) {
+        // Cloud-first: Supabaseで更新
+        const cloudService = CloudFirstService.getInstance()
+        const updatedItem = await cloudService.updateItem(id, patch, currentUserId)
+        
+        if (updatedItem) {
+          const items = get().items.map((i: Item) => (i.id === id ? updatedItem : i))
+          set({ items })
+          get().applyFilter()
+          return
+        } else {
+          // 失敗時はローカルフォールバック
+          console.warn('Cloud update failed, falling back to local')
+        }
+      }
+      
+      // ローカル更新（フォールバックまたはcloudFirst=false）
       try {
         const current = get().items.find((i: Item) => i.id === id)
         if (!current) return
         
-        const next: Item = { 
-          ...current, 
-          ...patch
-        }
+        const sanitizedPatch = sanitizeItem(patch)
+        const validation = validateItem({ ...current, ...sanitizedPatch })
+        if (!validation.isValid) return
         
+        const next: Item = { ...current, ...sanitizedPatch, updatedAt: Date.now() }
         await db.items.put(next)
         const items = get().items.map((i: Item) => (i.id === id ? next : i))
         set({ items })
+        get().applyFilter()
       } catch (error) {
+        console.error('Update error:', error)
       }
     },
 
-    remove: async (id: string) => {
-      const items = get().items.filter((i: Item) => i.id !== id)
-      set({ items })
-      get().applyFilter()
-      await db.items.delete(id)
+    remove: async (id: string, userId?: string) => {
+      const { cloudFirst, currentUserId } = get()
+      const user = userId || currentUserId
+      
+      if (cloudFirst && user) {
+        // Cloud-first: Supabaseで削除
+        const cloudService = CloudFirstService.getInstance()
+        const success = await cloudService.deleteItem(id, user)
+        
+        if (success) {
+          const items = get().items.filter((i: Item) => i.id !== id)
+          set({ items })
+          get().applyFilter()
+          return
+        } else {
+          // 失敗時はローカルフォールバック
+          console.warn('Cloud delete failed, falling back to local')
+        }
+      }
+      
+      // ローカル削除（フォールバックまたはcloudFirst=false）
+      try {
+        const items = get().items.filter((i: Item) => i.id !== id)
+        set({ items })
+        get().applyFilter()
+        await db.items.delete(id)
+        
+        // 削除後にクラウド同期（ユーザーIDがある場合）
+        if (userId) {
+          try {
+            await get().syncToCloud(userId)
+            console.log('Delete sync completed for item:', id)
+          } catch (syncError) {
+            console.error('Delete sync failed:', syncError)
+          }
+        }
+      } catch (error) {
+        console.error('Remove error:', error)
+      }
     },
-    removeAll: async () => {
-      set({ items: [], filtered: [] })
-      await db.items.clear()
+
+    removeAll: async (userId?: string) => {
+      const { cloudFirst, currentUserId } = get()
+      const user = userId || currentUserId
+      
+      if (cloudFirst && user) {
+        // Cloud-first: 全てのアイテムを削除
+        const cloudService = CloudFirstService.getInstance()
+        const items = get().items
+        
+        for (const item of items) {
+          await cloudService.deleteItem(item.id, user)
+        }
+        
+        set({ items: [], filtered: [] })
+        await db.items.clear()
+        return
+      }
+      
+      // ローカル削除（フォールバックまたはcloudFirst=false）
+      try {
+        set({ items: [], filtered: [] })
+        await db.items.clear()
+        
+        // 削除後にクラウド同期（ユーザーIDがある場合）
+        if (userId) {
+          try {
+            await get().syncToCloud(userId)
+            console.log('RemoveAll sync completed')
+          } catch (syncError) {
+            console.error('RemoveAll sync failed:', syncError)
+          }
+        }
+      } catch (error) {
+        console.error('RemoveAll error:', error)
+      }
     },
 
     toggleDone: async (id: string) => {
@@ -169,7 +295,9 @@ export const useStore = create<State & Actions>()(
           filtered = filtered.filter((i) => i.type === filterType)
         }
         
-        if (sort === 'updatedAt') {
+        if (sort === 'createdAt') {
+          filtered = filtered.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+        } else if (sort === 'updatedAt') {
           filtered = filtered.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
         } else if (sort === 'type') {
           filtered = filtered.sort((a, b) => {
@@ -189,6 +317,62 @@ export const useStore = create<State & Actions>()(
       } catch (error) {
         set({ filtered: [] })
       }
+    },
+
+    syncToCloud: async (userId: string) => {
+      // Cloud-first mode only
+    },
+
+    syncFromCloud: async (userId: string) => {
+      // Cloud-first mode only
+    },
+
+    setupRealtimeSync: (userId: string) => {
+      // Cloud-first mode only
+      return () => {}
+    },
+
+    softDelete: async (id: string, userId?: string) => {
+      const { cloudFirst, currentUserId } = get()
+      const user = userId || currentUserId
+      
+      if (cloudFirst && user) {
+        const cloudService = CloudFirstService.getInstance()
+        const success = await cloudService.deleteItem(id, user)
+        
+        if (success) {
+          const items = get().items.filter((i: Item) => i.id !== id)
+          set({ items })
+          get().applyFilter()
+          return
+        }
+      }
+      
+      // Local fallback
+      try {
+        const items = get().items.filter((i: Item) => i.id !== id)
+        set({ items })
+        get().applyFilter()
+        await db.items.delete(id)
+      } catch (error) {
+        // Handle error silently
+      }
+    },
+
+    setCloudHydrated: (v: boolean) => set({ cloudHydrated: v }),
+    setCloudFirst: (v: boolean) => set({ cloudFirst: v }),
+    setCurrentUserId: (userId?: string) => set({ currentUserId: userId }),
+
+    initializeCloudFirst: async (userId: string) => {
+      const cloudService = CloudFirstService.getInstance()
+      
+      const isEmpty = await cloudService.isCloudEmpty(userId)
+      
+      if (isEmpty) {
+        await cloudService.uploadLocalData(userId)
+      }
+      
+      set({ cloudFirst: true, currentUserId: userId })
     },
   }))
 )

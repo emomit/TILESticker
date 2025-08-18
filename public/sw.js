@@ -1,7 +1,6 @@
-const CACHE_NAME = 'tilesticker-v1';
+const CACHE_NAME = 'tilesticker-v2';
 const urlsToCache = [
   '/',
-  '/index.html',
   '/manifest.webmanifest',
   '/icons/icon-192.svg',
   '/icons/icon-512.svg'
@@ -11,6 +10,7 @@ self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => cache.addAll(urlsToCache))
+      .then(() => self.skipWaiting())
   );
 });
 
@@ -36,6 +36,6 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });

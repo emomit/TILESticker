@@ -6,11 +6,14 @@
     <meta name="description" content="TILESticker - Claymorphismデザインのタスク管理アプリ。ToDo、メモ、リンク、リスト、日付の5種類のカードを管理できます。" />
     <link rel="icon" href="/icons/icon-192.svg" type="image/svg+xml" />
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#e7ebf3" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="TILESticker" />
+    <meta name="msapplication-TileColor" content="#ffffff" />
+    <meta name="msapplication-navbutton-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="white" />
     <link rel="apple-touch-icon" href="/icons/icon-192.svg" />
     <title>TILESticker</title>
   </head>
@@ -22,12 +25,12 @@
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js')
             .then(registration => {
-              if (typeof import !== 'undefined' && import.meta && import.meta.env && import.meta.env.DEV) {
+              if (location.hostname === 'localhost') {
                 console.log('SW registered: ', registration);
               }
             })
             .catch(registrationError => {
-              if (typeof import !== 'undefined' && import.meta && import.meta.env && import.meta.env.DEV) {
+              if (location.hostname === 'localhost') {
                 console.log('SW registration failed: ', registrationError);
               }
             });

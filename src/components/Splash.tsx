@@ -5,7 +5,6 @@ type Props = { onDone: () => void }
 
 export function Splash({ onDone }: Props) {
   const text = 'TILESticker'
-  // カード系の色を想定（順番で虹っぽく見せる）
   const colors = [
     '#ffc4f1', '#fffbb5', '#a6e2ff', '#dbc9ff', '#a6ffe4',
     '#f87171', '#34d399', '#60a5fa', '#fbbf24', '#a78bfa'
