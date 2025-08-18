@@ -14,6 +14,7 @@ export default function App() {
   const selectedId = useStore((s) => s.selectedId)
   const items = useStore((s) => s.items)
   const cloudHydrated = useStore((s) => s.cloudHydrated)
+  const cloudFirst = useStore((s) => s.cloudFirst)
 
   const load = useStore((s) => s.load)
   const syncToCloud = useStore((s) => s.syncToCloud)
@@ -33,38 +34,33 @@ export default function App() {
     if (user && !authLoading) {
       setCurrentUserId(user.id)
       initializeCloudFirst(user.id)
+    } else if (!user && !authLoading) {
+      setCurrentUserId(undefined)
+    }
+    return undefined
+  }, [user, authLoading, initializeCloudFirst, setCurrentUserId])
+
+  useEffect(() => {
+    if (user && cloudFirst) {
       syncFromCloud(user.id)
       const unsubscribe = setupRealtimeSync(user.id)
       
       return () => {
         unsubscribe()
       }
-    } else if (!user && !authLoading) {
-      setCurrentUserId(undefined)
     }
     return undefined
-  }, [user, authLoading, syncFromCloud, setupRealtimeSync, initializeCloudFirst, setCurrentUserId])
+  }, [user, cloudFirst, syncFromCloud, setupRealtimeSync])
 
   useEffect(() => {
-    const { cloudFirst } = useStore.getState()
-    if (user && cloudHydrated && !cloudFirst) {
-      const t = setTimeout(() => {
-        syncToCloud(user.id)
-      }, 1000)
-      return () => clearTimeout(t)
-    }
-    return undefined
-  }, [user, cloudHydrated, useStore.getState().items, syncToCloud])
-
-  useEffect(() => {
-    if (user && cloudHydrated) {
+    if (user && cloudFirst) {
       const id = setInterval(() => {
         syncFromCloud(user.id)
       }, 5000)
       return () => clearInterval(id)
     }
     return undefined
-  }, [user, cloudHydrated, syncFromCloud])
+  }, [user, cloudFirst, syncFromCloud])
 
   return (
     <LayoutGroup>
