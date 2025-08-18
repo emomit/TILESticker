@@ -135,7 +135,6 @@ export const useStore = create<State & Actions>()(
           return
         } else {
           // 失敗時はローカルフォールバック
-          console.warn('Cloud update failed, falling back to local')
         }
       }
       
@@ -174,7 +173,6 @@ export const useStore = create<State & Actions>()(
           return
         } else {
           // 失敗時はローカルフォールバック
-          console.warn('Cloud delete failed, falling back to local')
         }
       }
       
@@ -189,7 +187,6 @@ export const useStore = create<State & Actions>()(
         if (userId) {
           try {
             await get().syncToCloud(userId)
-            console.log('Delete sync completed for item:', id)
           } catch (syncError) {
             console.error('Delete sync failed:', syncError)
           }
@@ -226,7 +223,6 @@ export const useStore = create<State & Actions>()(
         if (userId) {
           try {
             await get().syncToCloud(userId)
-            console.log('RemoveAll sync completed')
           } catch (syncError) {
             console.error('RemoveAll sync failed:', syncError)
           }
@@ -327,11 +323,8 @@ export const useStore = create<State & Actions>()(
     syncFromCloud: async (userId: string) => {
       const { cloudFirst } = get()
       if (!cloudFirst) {
-        console.log('Cloud-first mode not enabled')
         return
       }
-      
-      console.log('Starting syncFromCloud for user:', userId)
       try {
         const { data: cloudItems, error } = await supabase
           .from('items')
@@ -344,8 +337,6 @@ export const useStore = create<State & Actions>()(
           console.error('Supabase error:', error)
           return
         }
-        
-        console.log('Cloud items found:', cloudItems?.length || 0)
 
         // 現在のローカルアイテムを取得
         const currentLocalItems = await db.items.toArray()
@@ -384,7 +375,6 @@ export const useStore = create<State & Actions>()(
 
         await get().load()
         set({ cloudHydrated: true })
-        console.log('SyncFromCloud completed successfully')
       } catch (error) {
         console.error('SyncFromCloud error:', error)
       }
@@ -435,7 +425,7 @@ export const useStore = create<State & Actions>()(
           }
           return
         } else {
-          console.warn('Cloud delete failed, falling back to local')
+          // 失敗時はローカルフォールバック
         }
       }
       
@@ -455,19 +445,15 @@ export const useStore = create<State & Actions>()(
     setCurrentUserId: (userId?: string) => set({ currentUserId: userId }),
 
     initializeCloudFirst: async (userId: string) => {
-      console.log('Initializing cloud-first mode for user:', userId)
       const cloudService = CloudFirstService.getInstance()
       
       const isEmpty = await cloudService.isCloudEmpty(userId)
-      console.log('Cloud is empty:', isEmpty)
       
       if (isEmpty) {
-        console.log('Uploading local data to cloud')
         await cloudService.uploadLocalData(userId)
       }
       
       set({ cloudFirst: true, currentUserId: userId })
-      console.log('Cloud-first mode initialized')
     },
   }))
 )

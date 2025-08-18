@@ -133,7 +133,6 @@ export class CloudFirstService {
       }
 
       await db.items.put(localItem)
-      console.log('Added item via cloud:', localItem.id)
       return localItem
     } catch (error) {
       console.error('Add item failed:', error)
@@ -192,7 +191,6 @@ export class CloudFirstService {
       }
 
       await db.items.put(localItem)
-      console.log('Updated item via cloud:', localItem.id)
       return localItem
     } catch (error) {
       console.error('Update item failed:', error)
@@ -224,7 +222,6 @@ export class CloudFirstService {
         console.error('Local delete error:', localError)
       }
 
-      console.log('Deleted item via cloud:', id)
       return true
     } catch (error) {
       console.error('Delete item failed:', error)
