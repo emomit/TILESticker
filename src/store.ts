@@ -334,7 +334,7 @@ export const useStore = create<State & Actions>()(
           .select('*')
           .eq('user_id', userId)
           .is('deleted_at', null)
-          .order('updated_at', { ascending: false })
+          .order('created_at', { ascending: false })
 
         if (error) {
           console.error('Supabase error:', error)
@@ -377,7 +377,8 @@ export const useStore = create<State & Actions>()(
         }
 
         const items = await db.items.toArray()
-        set({ items, cloudHydrated: true })
+        const sortedItems = items.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0))
+        set({ items: sortedItems, cloudHydrated: true })
         get().applyFilter()
       } catch (error) {
         console.error('SyncFromCloud error:', error)
